@@ -8,7 +8,7 @@ from flask_swagger import swagger
 from flask_cors import CORS
 from utils import APIException, generate_sitemap
 from admin import setup_admin
-from models import db, Users
+from models import db, Users, Planets, People
 #from models import Person
 
 app = Flask(__name__)
@@ -36,14 +36,58 @@ def handle_invalid_usage(error):
 def sitemap():
     return generate_sitemap(app)
 
-@app.route('/user', methods=['GET'])
-def handle_hello():
+@app.route('/users', methods=['GET'])
+def get_users():
+    data= Users.query.all()
+    data= [user.serialize() for user in data]
+    
+    return jsonify(data), 200
 
-    response_body = {
-        "msg": "Hello, this is your GET /user response "
-    }
+@app.route('/users/<int:id>', methods=['GET'])
+def get_one_user(id):
+    try:
+        data= Users.query.get(id)
+        if data is None:
+            raise Exception ('error!')
+        return jsonify(data.serialize())
+    except Exception as e:
+        return jsonify({"error": str(e)})
+    
+@app.route('/planets', methods=['GET'])
+def get_planets():
+    data= Planets.query.all()
+    data= [user.serialize() for user in data]
+    
+    return jsonify(data), 200
 
-    return jsonify(response_body), 200
+@app.route('/planets/<int:id>', methods=['GET'])
+def get_one_planet(id):
+    try:
+        data= Planets.query.get(id)
+        if data is None:
+            raise Exception ('error!')
+        return jsonify(data.serialize())
+    except Exception as e:
+        return jsonify({"error": str(e)})
+
+@app.route('/people', methods=['GET'])
+def get_people():
+    data= People.query.all()
+    data= [user.serialize() for user in data]
+    
+    return jsonify(data), 200
+
+@app.route('/people/<int:id>', methods=['GET'])
+def get_one_person(id):
+    try:
+        data= People.query.get(id)
+        if data is None:
+            raise Exception ('error!')
+        return jsonify(data.serialize())
+    except Exception as e:
+        return jsonify({"error": str(e)})
+
+
 
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':
