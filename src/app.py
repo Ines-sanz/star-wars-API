@@ -53,6 +53,8 @@ def get_one_user(id):
     except Exception as e:
         return jsonify({"error": str(e)})
     
+
+    
 @app.route('/planets', methods=['GET'])
 def get_planets():
     data= Planets.query.all()
@@ -86,6 +88,159 @@ def get_one_person(id):
         return jsonify(data.serialize())
     except Exception as e:
         return jsonify({"error": str(e)})
+
+@app.route('/users/favorites', methods=['GET'])
+def get_users_favorites():
+    try: 
+        users = Users.query.all()
+        users_data = []
+        for user in users:
+            user_data = {
+                "id": user.id,
+                "name": f"{user.first_name} {user.last_name}",
+                "favorites" : {
+                    "planets":  [planet.serialize() for planet in user.planets],
+                    "people":  [person.serialize() for person in user.people]
+                }
+            }
+            users_data.append(user_data)
+
+        return jsonify(users_data), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@app.route('/users/<int:id>/favorites', methods=['GET'])
+def get_one_user_favorites(id):
+    try: 
+        user = Users.query.get(id)
+        if user is None:  
+            return jsonify({"error": "User not found"}), 404
+        
+        user_data = {
+                "id": user.id,
+                "name": f"{user.first_name} {user.last_name}",
+                "favorites" : {
+                    "planets":  [planet.serialize() for planet in user.planets],
+                    "people":  [person.serialize() for person in user.people]
+                }
+            }
+        if len(user_data) < 1:
+            return jsonify({"This user has no favorites"})
+
+        return jsonify(user_data), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+@app.route('/users/<int:user_id>/favorites/newfavperson/<int:people_id>', methods=['Post'])
+def post_new_favorite_person(user_id, people_id):
+    try: 
+        user = Users.query.get(user_id)
+        if user is None:  
+            return jsonify({"error": "User not found"}), 400
+        
+        person = People.query.get(people_id)
+        if person is None:  
+            return jsonify({"error": "People not found"}), 400
+        
+        
+        if person in user.people:
+             return jsonify({"message": "Person is already in user's favorites"}), 400
+        
+        user.people.append(person)
+        db.session.commit()
+
+        return jsonify({
+            "message": "Person added to user's favorites successfully",
+            "user_id": user.id,
+            "person": person.name
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+@app.route('/users/<int:user_id>/favorites/deletefavperson/<int:people_id>', methods=['Delete'])
+def delete_favorite_person(user_id, people_id):
+    try: 
+        user = Users.query.get(user_id)
+        if user is None:  
+            return jsonify({"error": "User not found"}), 400
+        
+        person = People.query.get(people_id)
+        if person is None:  
+            return jsonify({"error": "People not found"}), 400
+        
+        
+        if person not in user.people:
+             return jsonify({"message": "Person is not in user's favorites"}), 400
+        
+        user.people.remove(person)
+        db.session.commit()
+
+        return jsonify({
+            "message": "Person deleted from user's favorites successfully",
+            "user_id": user.id,
+            "person": person.name
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+    
+
+@app.route('/users/<int:user_id>/favorites/newfavplanet/<int:planet_id>', methods=['Post'])
+def post_new_favorite_planet(user_id, planet_id):
+    try:
+        user = Users.query.get(user_id)
+        if user is None:
+            return jsonify({"message": "User not found"}), 400
+        
+
+        planet = Planets.query.get(planet_id)
+        if planet is None:
+            return jsonify({"message": "Planet not found"}), 400
+        
+        if planet in user.planets:
+            return jsonify({"message": "Planet alredy in user's favorites"}), 400
+        
+        user.planets.append(planet)
+        db.session.commit()
+
+        return jsonify({
+                "message": "Planet added to user's favorites successfully",
+                "user_id": user.id,
+                "planet": planet.name
+            }), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+@app.route('/users/<int:user_id>/favorites/deletefavplanet/<int:planet_id>', methods=['Delete'])
+def delete_favorite_planet(user_id, planet_id):
+    try:
+        user = Users.query.get(user_id)
+        if user is None:
+            return jsonify({"message": "User not found"}), 400
+        
+
+        planet = Planets.query.get(planet_id)
+        if planet is None:
+            return jsonify({"message": "Planet not found"}), 400
+        
+        if planet not in user.planets:
+            return jsonify({"message": "Planet is not in user's favorites"}), 400
+        
+        user.planets.remove(planet)
+        db.session.commit()
+
+        return jsonify({
+                "message": "Planet deleted from user's favorites successfully",
+                "user_id": user.id,
+                "planet": planet.name
+            }), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
 
 
 
